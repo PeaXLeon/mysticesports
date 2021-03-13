@@ -1,6 +1,5 @@
 # Mystic Esports Bot
 A Discord Bot for the Mystic Esports Gaming Organization
-- The bot is still missing some features and I'll add them once they are done
 - I appreciate all the feedback you give
 
 # Social Media
