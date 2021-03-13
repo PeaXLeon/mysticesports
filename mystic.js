@@ -1,7 +1,6 @@
 const config   = require("./config.json");
 const Discord  = require("discord.js");
 const eco      = require("discord-economy");
-const seco     = require("discord-simple-economy");
 const fs       = require("fs");
 const db       = require("quick.db");
 const scramble = require("wordscramble");
@@ -204,11 +203,8 @@ bot.on("message", async (message) => { //commands
   const command = bot.commands.get(commandName) || bot.commands.find(cmd => cmd.aliases && cmd.aliases.includes(commandName));
   if (!command) return;
 
-  var user = message.mentions.users.first() || message.author
-  const ecoClient = new seco.guildUser(user, message.guild);
-
   try {
-    command.execute(bot, message, args, ecoClient);
+    command.execute(bot, message, args);
   } catch (error) {
     console.error(error);
     message.reply('There was an error trying to execute that command!');
