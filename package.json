@@ -1,0 +1,32 @@
+{
+  "name": "mystic-bot",
+  "version": "1.0.0",
+  "description": "Bot for Mystic Esports",
+  "main": "mystic.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "nodemon core"
+  },
+  "author": "RocketFlashXD",
+  "license": "ISC",
+  "dependencies": {
+    "brawlstars.js": "^1.0.8",
+    "discord-economy": "^1.2.2",
+    "discord-giveaways": "^4.4.3",
+    "discord.js": "^12.5.1",
+    "discord.js-collector": "^1.8.8",
+    "djs-economy": "^1.3.1",
+    "enmap": "^5.8.4",
+    "express": "^4.17.1",
+    "ffmpeg-static": "^4.2.7",
+    "ms": "^2.1.3",
+    "node-opus": "^0.3.3",
+    "nodemon": "^2.0.7",
+    "parse-ms": "^2.1.0",
+    "quick.db": "^7.1.3",
+    "sequelize": "^6.5.0",
+    "snekfetch": "^4.0.4",
+    "sqlite3": "^5.0.2",
+    "wordscramble": "^5.1.21"
+  }
+}
