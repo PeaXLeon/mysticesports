@@ -1,7 +1,13 @@
 {
-	"token": "TOKEN HERE",
+	"token": "NzU5NzE4MDEwNjYyOTQ0Nzc4.X3BkiA.9o4He2HwNEA4bWrRdPgeuRCPoSc",
+	"googleToken": "AIzaSyBBxZr0vTbsoHijMk-VQA7MHg2wnyPQ92A",
+	"RocketDiscordID": "643880838160842764",
+    "tenorKey": "JR1WW2RS6FQU",
+	"csxKey": "4cdfbac91958d33d8",
+    "cseKey": "3646f6238712e6b57",
 	"prefix": "/",
 	"logo": "https://i.imgur.com/c6DGqm0.png",
+	"emojiID": "675905709837123594",
 	"log": "HERE",
 	"embedColor": "#8098EA",
 	"hostedBy": true
