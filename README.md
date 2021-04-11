@@ -14,11 +14,9 @@ A Discord Bot for the Mystic Esports Gaming Organization
 # Features
 - Moderation commands
 - Full-costumizable economy system
+- Games
+- Image Manipulation
+- Music
 - Giveaways
 - Chat Events
-- Shop for the economy
 - Fun commands
-
-# Information
-- Change the Token in config.json
-- The prefix can also be changed in config.json
