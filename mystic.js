@@ -1,101 +1,13 @@
-const config     = require("./config.json")
-const color      = require("./colors.json")
-const Discord    = require("discord.js")
-const YouTube    = require("simple-youtube-api")
-const eco        = require("discord-economy")
-const djs        = require("djs-economy")
-const fs         = require("fs")
-const db         = require("quick.db")
-const scramble   = require("wordscramble")
-const { Player } = require("discord-player")
+const config   = require("./config.json");
+const Discord  = require("discord.js");
+const eco      = require("discord-economy");
+const fs       = require("fs");
+const db       = require("quick.db");
+const scramble = require("wordscramble");
 
-const bot = new Discord.Client({ partials: ["MESSAGE", "CHANNEL", "REACTION"]});
+const bot      = new Discord.Client();
 bot.setMaxListeners(30)
-const keepAlive = require('./server.js');
-keepAlive();
-
-bot.youtube  = new YouTube(config.googleToken)
-bot.commands = new Discord.Collection();
-
-const commandFolders = fs.readdirSync('./commands');
-for (const folder of commandFolders) {
-  const commandFiles = fs.readdirSync(`./commands/${folder}`).filter(file => file.endsWith('.js'));
-  for (const file of commandFiles) {
-	  const commands = require(`./commands/${folder}/${file}`);
-	  bot.commands.set(commands.name, commands);
-  };
-}
-
-/** MUSIC EVENTS */
-bot.player = new Player(bot, {
-    leaveOnEnd: false,
-    leaveOnEmpty: false
-})
-
-bot.player
-.on('trackStart', (message, track) => {
-    const embed = new Discord.MessageEmbed()
-    .setDescription(`Now playing [${track.title}](${track.url}) requested by ${message.author}`)
-    .setColor(color.red)
-    message.channel.send(embed)
-})
-.on('trackAdd', (message, queue, track) => {
-    message.channel.send(`${track.title} has been added to the queue!`)
-})
-.on('playlistAdd', (message, queue, playlist) => {
-    message.channel.send(`Playlist ${playlist.title} has been added to the queue (${playlist.tracks.length} songs)!`)
-})
-.on('searchResults', (message, query, tracks) => {
-    const embed = new Discord.MessageEmbed()
-    .setAuthor(`Here are your search results for ${query}!`)
-    .setDescription(tracks.map((t, i) => `**${i + 1}.** ${t.title}`))
-    .setColor(color.red)
-    .setFooter('Send the number of the song you want to play!')
-    message.channel.send(embed);
-})
-.on('searchInvalidResponse', (message, query, tracks, content, collector) => {
-    if (content === 'cancel') {
-        collector.stop()
-        return message.channel.send('Search cancelled!')
-    }
-    message.channel.send(`You must send a valid number between 1 and ${tracks.length}!`)
-})
-.on('searchCancel', (message, query, tracks) => {
-    message.channel.send('You did not provide a valid response... Please send the command again!')
-})
-.on('noResults', (message, query) => {
-    message.channel.send(`No results found on YouTube for ${query}!`)
-})
-.on('queueEnd', (message, queue) => {
-    message.channel.send('Music stopped as there is no more music in the queue!')
-})
-.on('channelEmpty', (message, queue) => {
-    message.channel.send('Music stopped as there is no more member in the voice channel!')
-})
-.on('botDisconnect', (message) => {
-    message.channel.send('Music stopped as I have been disconnected from the channel!')
-})
-.on('error', (error, message) => {
-    switch(error){
-        case 'NotPlaying':
-            message.channel.send('There is no music being played on this server!')
-            break;
-        case 'NotConnected':
-            message.channel.send('You are not connected in any voice channel!')
-            break;
-        case 'UnableToJoin':
-            message.channel.send('I am not able to join your voice channel, please check my permissions!')
-            break;
-        case 'LiveVideo':
-            message.channel.send('YouTube lives are not supported!')
-            break;
-        case 'VideoUnavailable':
-            message.channel.send('This YouTube video is not available!');
-            break;
-        //default:
-            //message.channel.send(`Something went wrong... Error: ${error}`)
-    }
-})
+bot.commands   = new Discord.Collection();
 
 /** GIVEAWAYS */
 const { GiveawaysManager } = require('discord-giveaways');
@@ -130,7 +42,7 @@ const GiveawayManagerWithOwnDatabase = class extends GiveawaysManager {
 
 const manager = new GiveawayManagerWithOwnDatabase(bot, {
     storage: false,
-    updateCountdownEvery: 5000,
+    updateCountdownEvery: 1000,
     default: {
         botsCanWin: false,
         exemptPermissions: [],
@@ -236,19 +148,24 @@ bot.shop = {
   }
 }; 
 
+const commandFiles = fs.readdirSync("./commands").filter(file => file.endsWith('.js'));
+for (const file of commandFiles) {
+	const commands = require(`./commands/${file}`);
+	bot.commands.set(commands.name, commands);
+};
+
 const activities_list = [
-  `Mystic TikTok | ${config.prefix}help`,
+  `Winter frying Apollo | ${config.prefix}help`,
   `Mystic YouTube Videos | ${config.prefix}help`,
   `new Mystic Merges | ${config.prefix}help`,
   `Mystic's server | ${config.prefix}help`,
 ]
 
-bot.on("ready", async () => {
+bot.on("ready", () => {
     setInterval(() => {
         const index = Math.floor(Math.random() * (activities_list.length));
         bot.user.setActivity(activities_list[index],{ type: 'WATCHING' });
-    }, 10000)
-
+    }, 10000);
     console.log(`Connected with ${bot.user.tag}`)
 });
 
@@ -266,29 +183,6 @@ bot.on("guildMemberAdd", async (member) => {
         wchannel.send(`Welcome to the Mystic Esports Discord Server <@${member.id}>! We now have **${member.guild.memberCount}** Members!💫`, wembed);
 })
 
-bot.on("messageReactionAdd", async (reaction, user) => {
-    if (reaction.message.partial) await reaction.message.fetch();
-    if (reaction.partial) await reaction.fetch();
-    if (!reaction.message.guild) return;
-
-    if (reaction.message.channel.id === '667191783452704780') {  // #rules channel
-        if (reaction.emoji.name === '✅') {
-            
-            if (reaction.message.guild.members.cache.get(user.id).roles.cache.find(r => r.id === "666834645584838686")) return // if member has Visitor return
-            
-            await reaction.message.guild.members.cache.get(user.id).roles.add('666834645584838686') // Visitor
-            await reaction.message.guild.members.cache.get(user.id).roles.remove('666872672881475587') // Unverified
-        }
-    }
-})
-
-/** SNIPE MESSAGES */
-bot.on("messageDelete", async (message) => {
-
-  db.set(`snipe_${message.guild.id}`, { author: message.author, msg: message.content })
-
-})
-
 /** COMMAND HANDLER */
 bot.on("message", async (message) => { //commands
   if (message.channel.type === "dm") return;
@@ -304,7 +198,7 @@ bot.on("message", async (message) => { //commands
 
   if (!message.content.startsWith(config.prefix)) return;
 
-  const args = message.content.slice(config.prefix.length).trim().split(/ +/);
+  const args = message.content.slice(config.prefix.length).trim().split(' ');
   const commandName = args.shift().toLowerCase();
   const command = bot.commands.get(commandName) || bot.commands.find(cmd => cmd.aliases && cmd.aliases.includes(commandName));
   if (!command) return;
@@ -323,13 +217,12 @@ bot.on("message", async (message) => {
     if (message.author.bot) return;
     if (message.content.startsWith(config.prefix)) return;
     if (message.channel.type !== "text") return;
-    if (message.channel.id !== "666892267411210251" && message.channel.id !== "666807797320646676" && message.channel.id !== "666894804583579677") return;
 
     /** Chance of an event happening (fully costumizable) */
-    if (Math.random() > 0.95) {
+    if (Math.random() > 0.97) {
 
       /** UNSCRABLING GAME */
-      if (Math.random() <= 0.33) {
+      if (Math.random() >= 0.33) {
 
         let words = [
           'mystic',
@@ -343,21 +236,7 @@ bot.on("message", async (message) => {
           'giveaways',
           'clubs',
           'games',
-          'money',
-          'etienne',
-          'doge',
-          'potato',
-          'clash royale',
-          'colt',
-          'punisher',
-          'lakers',
-          'flightreacts',
-          'trivia',
-          'twitter',
-          'instagram',
-          'youtube',
-          'tiktok',
-          'reddit'
+          'money'
         ]
 
         const randW = Math.floor(Math.random() * (words.length))
@@ -366,14 +245,14 @@ bot.on("message", async (message) => {
 
         message.channel.send(`**Unscrambling Game Event Incoming!**\nBe the first to unscramble the word to win 1500 coins!\nThe word is: \`${scrWord}\`\nYou have 30 seconds`)
         const { author } = (await message.channel.awaitMessages(
-          msg => msg.content.trim().toLowerCase() === word.toLowerCase(),
+          msg => msg.content.trim() === word,
           { max: 1, time: 30000, errors: ['time'] }
         ).catch(() => {
-          message.channel.send(`No one found out the word. The correct answer was ${word}`)
+          message.channel.send("No one found out the word. Better luck next time!")
         })).first()
 
         await message.channel.send(`${author.username} found out the word! You got **1500** coins!`)
-        await eco.AddToBalance(author.id, 1500)
+        await db.add(`money_${author.id}`, 1500)
       }
       ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
       /** QUIZ GAME */
@@ -384,20 +263,6 @@ bot.on("message", async (message) => {
           { question: 'What is Mystic\'s main color?', answer: 'Blue' },
           { question: 'What is the highest role in the server?', answer: 'Mystic Esports Bot' },
           { question: 'What is Mystic\'s main game?', answer: 'Brawl Stars' },
-          { question: 'What day was Mystic founded on? (format: dd/mm/yyyy)', answer: '21/04/2019' },
-          { question: 'What was the Mystic Discord Server called before Mystic Esports?', answer: 'Mega Elite' },
-          { question: 'Who is the current most OG staff in Mystic?', answer: 'Waffles' },
-          { question: 'Who is the CFO of Mystic?', answer: 'BlueDragon' },
-          { question: 'What region was the first Mystic club from?', answer: 'USA' },
-          { question: 'How many games is Mystic in?', answer: '15' },
-          { question: 'Who is the head graphic designer of Mystic?', answer: 'ItzJayJay' },
-          { question: 'Who is the head of content creation in Mystic?', answer: 'Mystic King' },
-          { question: 'What Creator Code should you use in the Brawl Stars shop?', answer: 'Skiller' },
-          { question: 'What is Mystic’s slogan?', answer: '#StayMystic' },
-          { question: 'What was the first ever Mystic merge club name?', answer: 'Mystic Legacy' },
-          { question: 'Who is the first ever Chairman of Mystic?', answer: 'Etienne' },
-          { question: 'Who is the first person to ever get blacklisted from Mystic?', answer: 'Slick' }
-
           //{ question: '', answer: '' },
         ]
 
@@ -412,31 +277,45 @@ bot.on("message", async (message) => {
           msg => msg.content.toLowerCase().trim() === answer.toLowerCase(),
           { max: 1, time: 20000, errors: ['time'] }
         ).catch(() => {
-          message.channel.send(`No one answered the question. The correct answer was ${answer}`)
+          message.channel.send("No one answered the question. *sad noises*")
         })).first()
 
         await message.channel.send(`${author.username} found out the answer! You won **1500** coins!`)
-        await eco.AddToBalance(author.id, 1500)
+        await db.add(`money_${author.id}`, 1500)
       }
       /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
       /** GUESS THE NUMBER */
       else if (Math.random() >= 0.66) {
 
-        const randomNum = `${Math.floor(Math.random() * 20) + 1}`
+        const randomNum = Math.floor(Math.random() * 20);
 
         message.channel.send(`**Guess The Number!**\nGuess the right number between 1-20 and win 1500 coins!\nYou have 10 seconds`)
 
         const { author } = (await message.channel.awaitMessages(
-          msg => msg.content === randomNum,
+          msg => msg.content.trim() === randomNum,
           { max: 1, time: 10000, errors: ['time'] }
         ).catch(() => {
-          message.channel.send(`No one could find the correct number. The correct answer was ${randomNum}`)
+          message.channel.send("No one could find the correct number. I guess no 1500 coins today.")
         })).first()
 
         await message.channel.send(`${author.username} got the right number! Congratulations, you won **1500** coins!`)
-        await eco.AddToBalance(author.id, 1500)
+        await db.add(`money_${author.id}`, 1500)
       }
     }
 })
+
+/** REMINDER MESSAGES */
+bot.setInterval(async (message) => {
+    const codeembed = new Discord.MessageEmbed()
+      .setTitle('CODE: Skiller')
+      .setDescription('Best code in Brawl Stars')
+      .addField('Make sure to use CODE: Skiller in the Brawl Stars shop to support a great content creator and to support the Mystic community. 🎵 (S-K-I-L-L-E-R Code Skiller in the Brawl Stars shop)')
+      .setFooter('#StayMystic', config.logo)
+      .setThumbnail('https://i.imgur.com/mKjmx6Q.jpg')
+      .setColor('#a5cced')
+    await message.guild.channels.cache.find(r => r.name === "↪rocket-main").then(ch => {
+      ch.send(codeembed)
+    })
+  }, 86400000)
 
 bot.login(config.token);
